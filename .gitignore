@@ -1,0 +1,17 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# macOS
+.DS_Store
+
+# Debug artifacts (regenerated per run)
+debug_arbuz/
+debug_arbuz.png
+pagination_debug.png
+
+# Runtime outputs
+run_report.json
