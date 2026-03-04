@@ -1,0 +1,269 @@
+{
+  "run_id": "20260304_100129Z",
+  "market": "magnum",
+  "city": "almaty",
+  "run_started_at": "2026-03-04T10:01:29.844085+00:00",
+  "run_finished_at": "2026-03-04T10:02:32.980827+00:00",
+  "run_duration_s": 63.1,
+  "total_categories": 18,
+  "summary": {
+    "success": 15,
+    "empty": 3,
+    "failed": 0
+  },
+  "total_items_collected": 1428,
+  "categories": [
+    {
+      "category": {
+        "id": "34",
+        "slug": "frukty-ovoschi",
+        "url": "https://magnum.kz/catalog?category=frukty-ovoschi&city=almaty",
+        "name": "Фрукты, овощи"
+      },
+      "status": "success",
+      "item_count": 20,
+      "error": null,
+      "started_at": "2026-03-04T10:01:30.673655+00:00",
+      "finished_at": "2026-03-04T10:01:31.208397+00:00",
+      "duration_s": 0.5
+    },
+    {
+      "category": {
+        "id": "35",
+        "slug": "myaso",
+        "url": "https://magnum.kz/catalog?category=myaso&city=almaty",
+        "name": "Мясо"
+      },
+      "status": "success",
+      "item_count": 28,
+      "error": null,
+      "started_at": "2026-03-04T10:01:31.208775+00:00",
+      "finished_at": "2026-03-04T10:01:31.780887+00:00",
+      "duration_s": 0.6
+    },
+    {
+      "category": {
+        "id": "9",
+        "slug": "gastronomiya",
+        "url": "https://magnum.kz/catalog?category=gastronomiya&city=almaty",
+        "name": "Гастрономия "
+      },
+      "status": "success",
+      "item_count": 83,
+      "error": null,
+      "started_at": "2026-03-04T10:01:31.781216+00:00",
+      "finished_at": "2026-03-04T10:01:33.920978+00:00",
+      "duration_s": 2.1
+    },
+    {
+      "category": {
+        "id": "13",
+        "slug": "bezalkogolnye-napitki",
+        "url": "https://magnum.kz/catalog?category=bezalkogolnye-napitki&city=almaty",
+        "name": "Безалкогольные напитки "
+      },
+      "status": "success",
+      "item_count": 146,
+      "error": null,
+      "started_at": "2026-03-04T10:01:33.921142+00:00",
+      "finished_at": "2026-03-04T10:01:35.980549+00:00",
+      "duration_s": 2.1
+    },
+    {
+      "category": {
+        "id": "10",
+        "slug": "konditerskie-izdeliya",
+        "url": "https://magnum.kz/catalog?category=konditerskie-izdeliya&city=almaty",
+        "name": "Кондитерские изделия "
+      },
+      "status": "success",
+      "item_count": 362,
+      "error": null,
+      "started_at": "2026-03-04T10:01:35.980820+00:00",
+      "finished_at": "2026-03-04T10:01:43.964253+00:00",
+      "duration_s": 8.0
+    },
+    {
+      "category": {
+        "id": "1",
+        "slug": "bakaleia",
+        "url": "https://magnum.kz/catalog?category=bakaleia&city=almaty",
+        "name": "Бакалея"
+      },
+      "status": "success",
+      "item_count": 174,
+      "error": null,
+      "started_at": "2026-03-04T10:01:43.964546+00:00",
+      "finished_at": "2026-03-04T10:01:57.125256+00:00",
+      "duration_s": 13.2
+    },
+    {
+      "category": {
+        "id": "12",
+        "slug": "molochnye-produkty",
+        "url": "https://magnum.kz/catalog?category=molochnye-produkty&city=almaty",
+        "name": "Молочные продукты "
+      },
+      "status": "success",
+      "item_count": 80,
+      "error": null,
+      "started_at": "2026-03-04T10:01:57.125599+00:00",
+      "finished_at": "2026-03-04T10:01:59.784679+00:00",
+      "duration_s": 2.7
+    },
+    {
+      "category": {
+        "id": "5",
+        "slug": "sobstvennoe-proizvodstvo",
+        "url": "https://magnum.kz/catalog?category=sobstvennoe-proizvodstvo&city=almaty",
+        "name": "Собственное производство "
+      },
+      "status": "success",
+      "item_count": 60,
+      "error": null,
+      "started_at": "2026-03-04T10:01:59.784954+00:00",
+      "finished_at": "2026-03-04T10:02:00.837464+00:00",
+      "duration_s": 1.1
+    },
+    {
+      "category": {
+        "id": "7",
+        "slug": "chai-koffee-kakao",
+        "url": "https://magnum.kz/catalog?category=chai-koffee-kakao&city=almaty",
+        "name": "Чай, Кофе, Какао "
+      },
+      "status": "success",
+      "item_count": 137,
+      "error": null,
+      "started_at": "2026-03-04T10:02:00.837723+00:00",
+      "finished_at": "2026-03-04T10:02:10.453482+00:00",
+      "duration_s": 9.6
+    },
+    {
+      "category": {
+        "id": "11",
+        "slug": "konservy",
+        "url": "https://magnum.kz/catalog?category=konservy&city=almaty",
+        "name": "Консервы "
+      },
+      "status": "success",
+      "item_count": 108,
+      "error": null,
+      "started_at": "2026-03-04T10:02:10.454039+00:00",
+      "finished_at": "2026-03-04T10:02:18.345939+00:00",
+      "duration_s": 7.9
+    },
+    {
+      "category": {
+        "id": "18",
+        "slug": "zamorojennye-produkty",
+        "url": "https://magnum.kz/catalog?category=zamorojennye-produkty&city=almaty",
+        "name": "Замороженные продукты"
+      },
+      "status": "success",
+      "item_count": 9,
+      "error": null,
+      "started_at": "2026-03-04T10:02:18.346228+00:00",
+      "finished_at": "2026-03-04T10:02:18.858109+00:00",
+      "duration_s": 0.5
+    },
+    {
+      "category": {
+        "id": "40",
+        "slug": "kanceliarskie-tovary",
+        "url": "https://magnum.kz/catalog?category=kanceliarskie-tovary&city=almaty",
+        "name": "Канцелярские товары"
+      },
+      "status": "empty",
+      "item_count": 0,
+      "error": null,
+      "started_at": "2026-03-04T10:02:18.858376+00:00",
+      "finished_at": "2026-03-04T10:02:19.180732+00:00",
+      "duration_s": 0.3
+    },
+    {
+      "category": {
+        "id": "6",
+        "slug": "bytovaiya-himiya",
+        "url": "https://magnum.kz/catalog?category=bytovaiya-himiya&city=almaty",
+        "name": "Бытовая химия"
+      },
+      "status": "success",
+      "item_count": 64,
+      "error": null,
+      "started_at": "2026-03-04T10:02:19.181202+00:00",
+      "finished_at": "2026-03-04T10:02:20.995669+00:00",
+      "duration_s": 1.8
+    },
+    {
+      "category": {
+        "id": "14",
+        "slug": "sredstva-gigieny",
+        "url": "https://magnum.kz/catalog?category=sredstva-gigieny&city=almaty",
+        "name": "Средства гигиены "
+      },
+      "status": "success",
+      "item_count": 130,
+      "error": null,
+      "started_at": "2026-03-04T10:02:20.995958+00:00",
+      "finished_at": "2026-03-04T10:02:29.941973+00:00",
+      "duration_s": 8.9
+    },
+    {
+      "category": {
+        "id": "17",
+        "slug": "tovary-dlya-doma",
+        "url": "https://magnum.kz/catalog?category=tovary-dlya-doma&city=almaty",
+        "name": "Товары для дома "
+      },
+      "status": "empty",
+      "item_count": 0,
+      "error": null,
+      "started_at": "2026-03-04T10:02:29.942283+00:00",
+      "finished_at": "2026-03-04T10:02:30.338956+00:00",
+      "duration_s": 0.4
+    },
+    {
+      "category": {
+        "id": "8",
+        "slug": "detskie-tovary",
+        "url": "https://magnum.kz/catalog?category=detskie-tovary&city=almaty",
+        "name": "Детские товары"
+      },
+      "status": "empty",
+      "item_count": 0,
+      "error": null,
+      "started_at": "2026-03-04T10:02:30.339295+00:00",
+      "finished_at": "2026-03-04T10:02:31.999465+00:00",
+      "duration_s": 1.7
+    },
+    {
+      "category": {
+        "id": "15",
+        "slug": "tekstil",
+        "url": "https://magnum.kz/catalog?category=tekstil&city=almaty",
+        "name": "Текстиль "
+      },
+      "status": "success",
+      "item_count": 10,
+      "error": null,
+      "started_at": "2026-03-04T10:02:31.999763+00:00",
+      "finished_at": "2026-03-04T10:02:32.446247+00:00",
+      "duration_s": 0.4
+    },
+    {
+      "category": {
+        "id": "16",
+        "slug": "drugie-tovary",
+        "url": "https://magnum.kz/catalog?category=drugie-tovary&city=almaty",
+        "name": "Другие товары "
+      },
+      "status": "success",
+      "item_count": 17,
+      "error": null,
+      "started_at": "2026-03-04T10:02:32.446455+00:00",
+      "finished_at": "2026-03-04T10:02:32.980543+00:00",
+      "duration_s": 0.5
+    }
+  ]
+}
