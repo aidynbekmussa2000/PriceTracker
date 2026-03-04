@@ -1,0 +1,13 @@
+markets:
+  - arbuz
+  - vprestige
+  - magnum
+
+cities:
+  - almaty
+  - aktau
+
+headless: true
+debug: false
+max_retries: 2
+data_dir: data
