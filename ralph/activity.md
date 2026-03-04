@@ -2,12 +2,29 @@
 
 ## Current Status
 **Last Updated:** 2026-03-04
-**Market Tasks Completed:** 4
-**Current Task:** add_market_lamoda (next pending)
+**Market Tasks Completed:** 5
+**Current Task:** add_market_leroy_merlin (next pending)
 
 ---
 
 ## Session Log
+
+### 2026-03-04 — add_market_flip
+- **Task:** `add_market_flip` — Add Flip marketplace adapter (https://flip.kz)
+- **Files changed:**
+  - `price_tracker/markets/flip.py` (created)
+  - `price_tracker/markets/__init__.py` (added flip import)
+  - `config.yaml` (added flip to markets list)
+- **Key finding:** flip.kz is a server-rendered site; no Playwright needed — adapter uses `requests` + BeautifulSoup. Category discovery uses `div.category-list a[href*="subsection="]` (302 categories). Product cards are `a.product[href*="/catalog?prod="]` with `div.title` for name and `div.price > span` (non-.old) for price. Prices use narrow no-break space `\u202f` as thousands separator. Pagination is `?subsection=N&page=P`.
+- **Commands run:**
+  - `python -m price_tracker.main --market flip --city almaty --headless --list-categories` (302 categories)
+  - `python -m price_tracker.main --market flip --city almaty --headless --category-id 44` (single category validation)
+- **Validation results:**
+  - 302 categories discovered
+  - 300 unique products collected in category 44 (7 pages, 0 empty, 0 failed)
+  - Output: `data/flip/almaty/20260304_173550Z.jsonl` (300 lines)
+  - Sample product: "Если все кошки в мире исчезнут" at 1926 KZT
+- **Status:** passes=true
 
 ### 2026-03-04 — add_market_europharma
 - **Task:** `add_market_europharma` — Add Europharma marketplace adapter (https://europharma.kz)
