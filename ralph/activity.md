@@ -2,12 +2,28 @@
 
 ## Current Status
 **Last Updated:** 2026-03-04
-**Market Tasks Completed:** 1
-**Current Task:** add_market_ayanmarket (next pending)
+**Market Tasks Completed:** 2
+**Current Task:** add_market_sulpak (next pending)
 
 ---
 
 ## Session Log
+
+### 2026-03-04 — add_market_technodom
+- **Task:** `add_market_technodom` — Add Technodom marketplace adapter (https://technodom.kz)
+- **Files changed:**
+  - `price_tracker/markets/technodom.py` (created)
+  - `price_tracker/markets/__init__.py` (added technodom import)
+  - `config.yaml` (added technodom to markets list)
+- **Key finding:** technodom.kz is a Next.js SSR site. Products render server-side into `[data-testid="product-card"]` elements. Name selector: `p[class*="ProductCardV_title"]`, price: `p[class*="ProductCardPrices_price"]`. Category discovery extracts depth-3 paths (`/catalog/a/b/c`) from the catalog nav, excluding brand filters (`/f/`). Pagination is URL-based `?page=N`. 438 leaf categories discovered.
+- **Commands run:**
+  - `python -m price_tracker.main --market technodom --city almaty --headless` (partial run, stopped after 12 categories)
+- **Validation results:**
+  - 438 categories discovered
+  - 330 unique products collected across 12 categories (1 empty, 0 failed) before early stop
+  - Output: `data/technodom/almaty/20260304_124809Z.jsonl` (330 lines)
+  - Sample product: "Автомобильное зарядное устройство Samsung" at 9890 KZT
+- **Status:** passes=true
 
 ### 2026-03-04 — add_market_magnum
 - **Task:** `add_market_magnum` — Add Magnum marketplace adapter (https://magnum.kz)
