@@ -2,12 +2,29 @@
 
 ## Current Status
 **Last Updated:** 2026-03-04
-**Market Tasks Completed:** 3
-**Current Task:** add_market_europharma (next pending)
+**Market Tasks Completed:** 4
+**Current Task:** add_market_lamoda (next pending)
 
 ---
 
 ## Session Log
+
+### 2026-03-04 — add_market_europharma
+- **Task:** `add_market_europharma` — Add Europharma marketplace adapter (https://europharma.kz)
+- **Files changed:**
+  - `price_tracker/markets/europharma.py` (created)
+  - `price_tracker/markets/__init__.py` (added europharma import)
+  - `config.yaml` (added europharma to markets list)
+- **Key finding:** europharma.kz is a server-rendered PHP/Yii site with PJAX progressive enhancement. Full HTML is available in the initial response without JS execution. Category discovery uses subcategory links (`a.submenu__link`) from the main nav (70 subcategories discovered). Product cards use `div.card-product.sl-item` with `data-price` attribute for clean integer price. Product URLs are root-relative (e.g., `/product-slug`). Pagination is `?page=N` based (N starts at 2). No city routing in URLs.
+- **Commands run:**
+  - `python -m price_tracker.main --market europharma --city almaty --headless --list-categories` (70 categories)
+  - `python -m price_tracker.main --market europharma --city almaty --headless --category-id analgetiki` (single category validation)
+- **Validation results:**
+  - 70 categories discovered
+  - 30 unique products collected in analgetiki category (4 pages, 0 empty, 0 failed)
+  - Output: `data/europharma/almaty/20260304_131348Z.jsonl` (30 lines)
+  - Sample product: "Нимесулид 100 мг № 20 табл" at 805 KZT
+- **Status:** passes=true
 
 ### 2026-03-04 — add_market_sulpak
 - **Task:** `add_market_sulpak` — Add Sulpak marketplace adapter (https://sulpak.kz)
