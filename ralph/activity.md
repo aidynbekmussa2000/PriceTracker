@@ -2,12 +2,29 @@
 
 ## Current Status
 **Last Updated:** 2026-03-04
-**Market Tasks Completed:** 5
-**Current Task:** add_market_leroy_merlin (next pending)
+**Market Tasks Completed:** 6
+**Current Task:** — (all tasks complete)
 
 ---
 
 ## Session Log
+
+### 2026-03-04 — add_market_leroy_merlin
+- **Task:** `add_market_leroy_merlin` — Add Leroy Merlin marketplace adapter (https://leroymerlin.kz)
+- **Files changed:**
+  - `price_tracker/markets/leroy_merlin.py` (created)
+  - `price_tracker/markets/__init__.py` (added leroy_merlin import)
+  - `config.yaml` (added leroy_merlin to markets list)
+- **Key finding:** leroymerlin.kz is served by the lemanapro.kz platform (React SSR). All requests pass through servicepipe.ru bot protection, which is bypassed in headless mode by injecting `delete Object.getPrototypeOf(navigator).webdriver` as a Playwright init script combined with a standard Chrome user-agent string. No launch args needed. Catalog URL is `lemanapro.kz/catalogue/`, category URLs follow `/catalogue/{slug}/`. Product cards use `[data-qa="product"]` selector; name from `.product-card-name-link`; price integer from `[data-testid="price-integer"]` (clean integer, strip spaces). Pagination is URL-based `?page=N` (1-indexed; page 1 is the base URL, page=0 is the disabled "prev" button — excluded). Max page detected from highest N in pagination link hrefs. Categories with no product cards returned as empty (parent categories).
+- **Commands run:**
+  - `python -m price_tracker.main --market leroy_merlin --city almaty --headless --list-categories` (338 categories)
+  - `python -m price_tracker.main --market leroy_merlin --city almaty --headless --category-id aromaty-dlya-doma` (single category validation)
+- **Validation results:**
+  - 338 categories discovered
+  - 672 unique products collected in aromaty-dlya-doma category (63 pages, 0 empty, 0 failed)
+  - Output: `data/leroy_merlin/almaty/20260304_180351Z.jsonl` (672 lines), `data/leroy_merlin/almaty/20260304_180351Z_report.json`
+  - Sample product: "Ароматический диффузор Bago home Свежий хлопок 45 мл" at 8490 KZT
+- **Status:** passes=true
 
 ### 2026-03-04 — add_market_flip
 - **Task:** `add_market_flip` — Add Flip marketplace adapter (https://flip.kz)
