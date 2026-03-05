@@ -2,12 +2,29 @@
 
 ## Current Status
 **Last Updated:** 2026-03-05
-**Market Tasks Completed:** 7
-**Current Task:** — (ayanmarket complete; astykzhan, lamoda, wildberries pending)
+**Market Tasks Completed:** 8
+**Current Task:** — (astykzhan complete; lamoda, wildberries pending)
 
 ---
 
 ## Session Log
+
+### 2026-03-05 — add_market_astykzhan
+- **Task:** `add_market_astykzhan` — Add Astykzhan marketplace adapter (https://astykzhan.kz)
+- **Files changed:**
+  - `price_tracker/markets/astykzhan.py` (created)
+  - `price_tracker/markets/__init__.py` (added astykzhan import)
+  - `config.yaml` (added astykzhan to markets list)
+- **Key finding:** astykzhan.kz is a server-rendered Bitrix CMS site. No browser/Playwright needed — adapter uses `requests`. Site has an infinite 302 redirect loop without a valid city session cookie; resolved by setting `BITRIX_SM_city=KO` (Kostanai) and `BITRIX_SM_lang=RU` cookies per-session. Category discovery parses all `/catalog/...` links from the catalog homepage, then filters to leaf categories only (those not a URL-prefix of any other path) — 335 leaf categories found. Product cards use `div.catalog-product` selector; name from `.catalog-product__title`; price from `data-price` attribute (clean integer, no string parsing needed); product URL from `a.learn_more_bnt[href]`. Pagination uses Bitrix-standard `?PAGEN_1=N&SIZEN_1=30` URL params; max page detected from highest PAGEN_1 value in pagination links. Category ID/slug is the full path relative to `/catalog/` (e.g., `produkty-pitaniya/bakaleya/krupy`). Site serves Kostanai region; `supported_cities=['almaty']` is conventional.
+- **Commands run:**
+  - `python -m price_tracker.main --market astykzhan --city almaty --headless --list-categories` (335 categories)
+  - `python -m price_tracker.main --market astykzhan --city almaty --headless --category-id "produkty-pitaniya/bakaleya/krupy"` (single category validation)
+- **Validation results:**
+  - 335 leaf categories discovered
+  - 248 unique products in produkty-pitaniya/bakaleya/krupy — 9 pages, correct pagination
+  - Output: `data/astykzhan/almaty/20260305_054844Z.jsonl` (248 lines), `data/astykzhan/almaty/20260305_054844Z_report.json`
+  - Sample product: "КРУПА ГРЕЧНЕВАЯ КГ" at 285 KZT
+- **Status:** passes=true
 
 ### 2026-03-05 — add_market_ayanmarket
 - **Task:** `add_market_ayanmarket` — Add AyanMarket marketplace adapter (https://ayanmarket.kz)
