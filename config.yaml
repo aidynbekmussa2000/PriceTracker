@@ -7,6 +7,7 @@ markets:
   - europharma
   - flip
   - leroy_merlin
+  - ayanmarket
 
 cities:
   - almaty

@@ -1,13 +1,34 @@
 # Price Tracker — Ralph Activity Log
 
 ## Current Status
-**Last Updated:** 2026-03-04
-**Market Tasks Completed:** 6
-**Current Task:** — (all tasks complete)
+**Last Updated:** 2026-03-05
+**Market Tasks Completed:** 7
+**Current Task:** — (ayanmarket complete; astykzhan, lamoda, wildberries pending)
 
 ---
 
 ## Session Log
+
+### 2026-03-05 — add_market_ayanmarket
+- **Task:** `add_market_ayanmarket` — Add AyanMarket marketplace adapter (https://ayanmarket.kz)
+- **Files changed:**
+  - `price_tracker/markets/ayanmarket.py` (created)
+  - `price_tracker/markets/__init__.py` (added ayanmarket import)
+  - `config.yaml` (added ayanmarket to markets list)
+- **Key finding:** ayanmarket.kz is a Nuxt.js + Vuetify SPA backed by a public REST API at `https://ayanmarketapi.kz/api`. No browser/Playwright needed — adapter uses `requests`. Authentication requires only `Referer: https://ayanmarket.kz/` + `x-anonymous-id: <uuid>` headers. Full API flow: (1) `POST /api/site/geo/find/address {"pointCoords":[]}` → returns 61 department objects (store locations; default geolocation = Karaganda region); extract their `id` integers. (2) Categories scraped from server-rendered homepage HTML via `a[href*="/shop/collection/"]` → 2470 unique categories; slug+ID extracted from URL pattern `slug-{id}`. (3) Products: `PUT /api/web/provider/product/get/filter/site` with `{"categoryIds":[N],"departmentIds":[...],"page":P,"size":72,...}`; response has `products.content[]` with `providerProductId`, `name`, `pricesList[].price`. Pagination via `totalPages`. Site serves Karaganda/Temirtau/Astana (not Almaty); `supported_cities=['almaty']` is conventional since no city routing in API.
+- **Commands run:**
+  - `python -m price_tracker.main --market ayanmarket --city almaty --headless --list-categories` (2470 categories)
+  - `python -m price_tracker.main --market ayanmarket --city almaty --headless --category-id 569` (moloko — single category)
+  - `python -m price_tracker.main --market ayanmarket --city almaty --headless --category-id 175964` (piknik-na-prirode — pagination validation)
+- **Validation results:**
+  - 2470 categories discovered
+  - 2 unique products in moloko (category 569) — 1 page
+  - 82 unique products in piknik-na-prirode (category 175964) — 5 pages, correct pagination
+  - Output: `data/ayanmarket/almaty/20260305_053703Z.jsonl` (2 lines), `data/ayanmarket/almaty/20260305_053717Z.jsonl` (82 lines)
+  - Sample product: "МОЛОКО КАЗАХСТАН 0.5Л 3.2% Ф/П" at 282 KZT
+- **Status:** passes=true
+
+
 
 ### 2026-03-04 — add_market_leroy_merlin
 - **Task:** `add_market_leroy_merlin` — Add Leroy Merlin marketplace adapter (https://leroymerlin.kz)

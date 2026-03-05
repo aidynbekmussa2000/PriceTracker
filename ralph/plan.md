@@ -90,7 +90,7 @@ Each market must follow the adapter contract in `price_tracker/markets/base.py` 
       "Mark this task passes=true"
     ],
     "depends_on": ["market_template_ready"],
-    "passes": "in_progress"
+    "passes": true
   },
   {
     "id": "add_market_astykzhan",
@@ -109,7 +109,7 @@ Each market must follow the adapter contract in `price_tracker/markets/base.py` 
       "Mark this task passes=true"
     ],
     "depends_on": ["market_template_ready"],
-    "passes": "in_progress"
+    "passes": false
   },
   {
     "id": "add_market_technodom",
@@ -185,7 +185,7 @@ Each market must follow the adapter contract in `price_tracker/markets/base.py` 
       "Mark this task passes=true"
     ],
     "depends_on": ["market_template_ready"],
-    "passes": "in_progress"
+    "passes": false
   },
   {
     "id": "add_market_wildberries",
@@ -204,7 +204,7 @@ Each market must follow the adapter contract in `price_tracker/markets/base.py` 
       "Mark this task passes=true"
     ],
     "depends_on": ["market_template_ready"],
-    "passes": true
+    "passes": false
   },
   {
     "id": "add_market_flip",
@@ -228,7 +228,7 @@ Each market must follow the adapter contract in `price_tracker/markets/base.py` 
   {
     "id": "add_market_leroy_merlin",
     "category": "feature",
-    "description": "Add Leroy Merlin marketplace adapter (https://leroymerlin.kz)",
+    "description": "Add Leroy Merlin marketplace adapter (https://lemanapro.kz/)",
     "steps": [
       "Create price_tracker/markets/leroy_merlin.py with BaseMarket subclass",
       "Implement discover_categories(city) for leroymerlin.kz",
