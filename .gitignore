@@ -9,9 +9,9 @@ __pycache__/
 .DS_Store
 
 # Debug artifacts (regenerated per run)
-debug_arbuz/
-debug_arbuz.png
-pagination_debug.png
+debug_*/
+*.png
 
 # Runtime outputs
+data/
 run_report.json
