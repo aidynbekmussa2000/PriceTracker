@@ -185,7 +185,7 @@ Each market must follow the adapter contract in `price_tracker/markets/base.py` 
       "Mark this task passes=true"
     ],
     "depends_on": ["market_template_ready"],
-    "passes": false
+    "passes": true
   },
   {
     "id": "add_market_wildberries",

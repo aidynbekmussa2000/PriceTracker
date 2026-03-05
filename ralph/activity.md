@@ -2,12 +2,33 @@
 
 ## Current Status
 **Last Updated:** 2026-03-05
-**Market Tasks Completed:** 8
-**Current Task:** — (astykzhan complete; lamoda, wildberries pending)
+**Market Tasks Completed:** 9
+**Current Task:** — (lamoda complete; wildberries pending)
 
 ---
 
 ## Session Log
+
+### 2026-03-05 — add_market_lamoda
+- **Task:** `add_market_lamoda` — Add Lamoda marketplace adapter (https://lamoda.kz)
+- **Files changed:**
+  - `price_tracker/markets/lamoda.py` (created)
+  - `price_tracker/markets/__init__.py` (added lamoda import)
+  - `config.yaml` (added lamoda to markets list)
+- **Key finding:** lamoda.kz is a Vue/Nuxt SPA with 403 bot-detection on plain HTTP requests; requires Playwright. Bot detection bypassed using `delete Object.getPrototypeOf(navigator).webdriver` init script + Chrome UA (same technique as leroy_merlin). Products are SSR-rendered into the initial HTML in a "faded/preloader" state — data (brand, name, price) is present without waiting for full hydration. Card container class is `x-product-card__card` (BEM element — NOT `.x-product-card` which does not exist as a class). Product URL on `<a href="/p/{sku}/{slug}/">` inside card. Brand: `.x-product-card-description__brand-name`, Name: `.x-product-card-description__product-name`, Sale price: `.x-product-card-description__price-new` (includes ₸ symbol), old price: `.x-product-card-description__price-old` (no ₸ — skipped). Non-sale products use a plain price element without the `-new` suffix. Pagination: URL-based `?page=N` works (Lamoda uses `LoadMoreProductsTrigger` JS component in browser, but URL params still function server-side). Max pages detected from embedded SSR JSON `"pagination":{"pages":N}` in page source (traditional anchor hrefs are not rendered). 692 categories discovered from main navigation.
+- **Commands run:**
+  - `python -m price_tracker.main --market lamoda --city almaty --headless --list-categories` (692 categories)
+  - `python -m price_tracker.main --market lamoda --city almaty --headless --category-id 33` (shoes-tufli, single-page validation)
+  - `python -m price_tracker.main --market lamoda --city almaty --headless --category-id 1636` (socks-boys-kolgotki, multi-page validation)
+- **Validation results:**
+  - 692 categories discovered
+  - 55 unique products in shoes-tufli (category 33) — 1 page
+  - 100 unique products in socks-boys-kolgotki (category 1636) — 3 pages, correct pagination
+  - Output: `data/lamoda/almaty/20260305_060921Z.jsonl` (55 lines), `data/lamoda/almaty/20260305_061029Z.jsonl` (51 lines)
+  - Sample product: "Bridget Туфли Полнота E (5)" at 7780 KZT
+- **Status:** passes=true
+
+
 
 ### 2026-03-05 — add_market_astykzhan
 - **Task:** `add_market_astykzhan` — Add Astykzhan marketplace adapter (https://astykzhan.kz)

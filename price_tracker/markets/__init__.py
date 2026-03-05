@@ -10,3 +10,4 @@ from . import flip  # noqa: F401
 from . import leroy_merlin  # noqa: F401
 from . import ayanmarket  # noqa: F401
 from . import astykzhan  # noqa: F401
+from . import lamoda  # noqa: F401
