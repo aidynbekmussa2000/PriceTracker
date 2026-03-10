@@ -1,13 +1,32 @@
 # Price Tracker — Ralph Activity Log
 
 ## Current Status
-**Last Updated:** 2026-03-05
-**Market Tasks Completed:** 9
-**Current Task:** — (lamoda complete; wildberries pending)
+**Last Updated:** 2026-03-10
+**Market Tasks Completed:** 10
+**Current Task:** — (megastroy complete; finnflare pending)
 
 ---
 
 ## Session Log
+
+### 2026-03-10 — add_market_megastroy
+- **Task:** `add_market_megastroy` — Add Megastroy marketplace adapter (https://megastroy.kz)
+- **Files changed:**
+  - `price_tracker/markets/megastroy.py` (created)
+  - `price_tracker/markets/__init__.py` (added megastroy import)
+  - `config.yaml` (added megastroy to markets list)
+- **Key finding:** megastroy.kz is a server-rendered Bitrix CMS site (same CMS as astykzhan.kz). No browser/Playwright needed — adapter uses `requests`. No city routing or redirect issues; single catalog serving Astana region. Category discovery fetches `/catalog/` page, collects all `/catalog/...` hrefs, then keeps only leaf paths (not a URL-prefix of any other) — 119 leaf categories discovered. Product cards use `div.catalog_item_wrapp` selector; name+URL from `div.item-title a`; price from `span.price_value` (space-separated thousands, e.g. "1 690" → int 1690). Pagination uses Bitrix-standard `?PAGEN_1=N`; max page detected from highest PAGEN_1 value in anchor hrefs. Prices are in тенге (KZT) with no currency suffix needed.
+- **Commands run:**
+  - `python -m price_tracker.main --market megastroy --city almaty --headless --list-categories` (119 categories)
+  - `python -m price_tracker.main --market megastroy --city almaty --headless --category-id "sad_ogorod/ukryvnoy_material"` (single-page validation)
+  - `python -m price_tracker.main --market megastroy --city almaty --headless --category-id "instrument/ruchnoy_instrument"` (multi-page validation)
+- **Validation results:**
+  - 119 leaf categories discovered
+  - 12 unique products in sad_ogorod/ukryvnoy_material — 1 page
+  - 850 unique products in instrument/ruchnoy_instrument — 43 pages, correct pagination
+  - Output: `data/megastroy/almaty/20260310_111043Z.jsonl` (12 lines), `data/megastroy/almaty/20260310_111050Z.jsonl` (850 lines)
+  - Sample product: "Укрытие 4м*12,5м AVIORA/10" at 1690 KZT
+- **Status:** passes=true
 
 ### 2026-03-05 — add_market_lamoda
 - **Task:** `add_market_lamoda` — Add Lamoda marketplace adapter (https://lamoda.kz)

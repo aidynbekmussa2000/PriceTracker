@@ -204,7 +204,7 @@ Each market must follow the adapter contract in `price_tracker/markets/base.py` 
       "Mark this task passes=true"
     ],
     "depends_on": ["market_template_ready"],
-    "passes": false
+    "passes": "skipped"
   },
   {
     "id": "add_market_flip",
@@ -243,6 +243,63 @@ Each market must follow the adapter contract in `price_tracker/markets/base.py` 
     ],
     "depends_on": ["market_template_ready"],
     "passes": true
+  },
+  {
+    "id": "add_market_megastroy",
+    "category": "feature",
+    "description": "Add Megastroy marketplace adapter (https://megastroy.kz/)",
+    "steps": [
+      "Create price_tracker/markets/megastroy.py with BaseMarket subclass",
+      "Implement discover_categories(city) for megastroy.kz",
+      "Implement crawl_category(category, city, run_id) with pagination and parsing",
+      "Register market via register_market('megastroy', MegastroyMarket)",
+      "Import module in price_tracker/markets/__init__.py",
+      "Add market slug to config.yaml markets list",
+      "Run: python -m price_tracker.main --market megastroy --city almaty --headless",
+      "Verify output files in data/megastroy/almaty/",
+      "Append dated entry to ralph/activity.md",
+      "Mark this task passes=true"
+    ],
+    "depends_on": ["market_template_ready"],
+    "passes": true
+  },
+  {
+    "id": "add_market_finnflare",
+    "category": "feature",
+    "description": "Add FinnFlare marketplace adapter (https://www.finn-flare.kz/)",
+    "steps": [
+      "Create price_tracker/markets/finnflare.py with BaseMarket subclass",
+      "Implement discover_categories(city) for finn-flare.kz",
+      "Implement crawl_category(category, city, run_id) with pagination and parsing",
+      "Register market via register_market('finnflare', FinnFlareMarket)",
+      "Import module in price_tracker/markets/__init__.py",
+      "Add market slug to config.yaml markets list",
+      "Run: python -m price_tracker.main --market finnflare --city almaty --headless",
+      "Verify output files in data/finnflare/almaty/",
+      "Append dated entry to ralph/activity.md",
+      "Mark this task passes=true"
+    ],
+    "depends_on": ["market_template_ready"],
+    "passes": false
+  },
+  {
+    "id": "add_market_biosfera",
+    "category": "feature",
+    "description": "Add Biosfera marketplace adapter (https://biosfera.kz/ru)",
+    "steps": [
+      "Create price_tracker/markets/biosfera.py with BaseMarket subclass",
+      "Implement discover_categories(city) for biosfera.kz",
+      "Implement crawl_category(category, city, run_id) with pagination and parsing",
+      "Register market via register_market('biosfera', BiosferaMarket)",
+      "Import module in price_tracker/markets/__init__.py",
+      "Add market slug to config.yaml markets list",
+      "Run: python -m price_tracker.main --market biosfera --city almaty --headless",
+      "Verify output files in data/biosfera/almaty/",
+      "Append dated entry to ralph/activity.md",
+      "Mark this task passes=true"
+    ],
+    "depends_on": ["market_template_ready"],
+    "passes": false
   }
 ]
 ```
