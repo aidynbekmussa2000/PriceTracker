@@ -1,8 +1,8 @@
-# 🏪 Arbuz Parsing - Price Tracker
+# Price Tracker
 
 A multi-marketplace price tracker for Kazakh e-commerce platforms. Discover product categories and scrape real-time price data from multiple online marketplaces, with normalized JSON and JSONL output.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Features](#features)
 - [Supported Marketplaces](#supported-marketplaces)
@@ -17,7 +17,7 @@ A multi-marketplace price tracker for Kazakh e-commerce platforms. Discover prod
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
 
-## ✨ Features
+## Features
 
 - **Multi-marketplace scraping** — Track prices from 11+ Kazakh e-commerce sites simultaneously
 - **Automatic category discovery** — Crawls all available product categories per market
@@ -27,7 +27,7 @@ A multi-marketplace price tracker for Kazakh e-commerce platforms. Discover prod
 - **Debug mode** — Capture screenshots and HTML snapshots for troubleshooting
 - **Adapter pattern** — Market-agnostic architecture makes adding new markets simple
 
-## 🛍️ Supported Marketplaces
+## Supported Marketplaces
 
 | Market | Type | Categories | Notes |
 |--------|------|-----------|-------|
@@ -74,7 +74,7 @@ data/
 └── ...
 ```
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 - Python 3.8+
@@ -103,7 +103,7 @@ data/
    bash install.sh
    ```
 
-## 📖 Usage
+## Usage
 
 ### Basic Commands
 
@@ -554,7 +554,7 @@ python -m price_tracker.main \
   --category-id <id>
 ```
 
-## 📝 Requirements
+## Requirements
 
 - **beautifulsoup4** — HTML parsing
 - **playwright** — Browser automation
@@ -567,15 +567,6 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-## 🤝 Contributing
-
-See [CLAUDE.md](CLAUDE.md) for detailed architecture notes and development guidelines.
-
-## 📄 License
-
-[License info if applicable]
-
----
 
 **Last updated:** March 2026
 **Maintained by:** Development Team
