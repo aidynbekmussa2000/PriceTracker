@@ -2,12 +2,31 @@
 
 ## Current Status
 **Last Updated:** 2026-03-10
-**Market Tasks Completed:** 10
-**Current Task:** — (megastroy complete; finnflare pending)
+**Market Tasks Completed:** 11
+**Current Task:** — (finnflare complete; biosfera pending)
 
 ---
 
 ## Session Log
+
+### 2026-03-10 — add_market_finnflare
+- **Task:** `add_market_finnflare` — Add FinnFlare marketplace adapter (https://www.finn-flare.kz)
+- **Files changed:**
+  - `price_tracker/markets/finnflare.py` (created)
+  - `price_tracker/markets/__init__.py` (added finnflare import)
+  - `config.yaml` (added finnflare to markets list)
+- **Key finding:** finn-flare.kz is a server-rendered Bitrix CMS site. No browser/Playwright needed — adapter uses `requests` + BeautifulSoup. Category discovery fetches `/catalog/` page and collects all `a[href]` links matching exactly `/catalog/<slug>/` (2 path segments) — 126 categories discovered. Product cards use `.product-element` selector; name from `.itemslider-name span`; product URL from `a.catalog-item-pointer__wrap[href]` (first link per card). Price from `.itemslider-price .price.bold` — works for both discounted (sale) and regular-priced items; discounted items also show `.price_old` (crossed-out original). Price text uses regular spaces as thousands separator + `₸` symbol (stripped via regex). Pagination uses Bitrix-standard `?PAGEN_1=N`; max page detected from highest PAGEN_1 value in anchor hrefs. No city routing; single national catalog.
+- **Commands run:**
+  - `python -m price_tracker.main --market finnflare --city almaty --headless --list-categories` (126 categories)
+  - `python -m price_tracker.main --market finnflare --city almaty --headless --category-id zhenskie-aksessuary` (single-page validation)
+  - `python -m price_tracker.main --market finnflare --city almaty --headless --category-id zhenskie-puhoviki` (multi-page validation)
+- **Validation results:**
+  - 126 categories discovered
+  - 134 unique products in zhenskie-aksessuary — 3 pages, correct pagination
+  - 52 unique products in zhenskie-puhoviki — 2 pages, correct pagination
+  - Output: `data/finnflare/almaty/20260310_111800Z.jsonl` (134 lines), `data/finnflare/almaty/20260310_111811Z.jsonl` (52 lines)
+  - Sample product: "Солнцезащитные очки" at 13,990 KZT
+- **Status:** passes=true
 
 ### 2026-03-10 — add_market_megastroy
 - **Task:** `add_market_megastroy` — Add Megastroy marketplace adapter (https://megastroy.kz)

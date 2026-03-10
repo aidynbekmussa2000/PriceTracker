@@ -12,3 +12,4 @@ from . import ayanmarket  # noqa: F401
 from . import astykzhan  # noqa: F401
 from . import lamoda  # noqa: F401
 from . import megastroy  # noqa: F401
+from . import finnflare  # noqa: F401
