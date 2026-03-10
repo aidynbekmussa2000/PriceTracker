@@ -64,6 +64,10 @@ def _clean_slug(href: str) -> Optional[str]:
 class SulpakMarket(BaseMarket):
     """Sulpak.kz electronics/appliance price scraper."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._seen_hrefs: set = set()
+
     @property
     def market_name(self) -> str:
         return "sulpak"
@@ -128,8 +132,9 @@ class SulpakMarket(BaseMarket):
         city: str,
         run_id: str,
     ) -> List[PriceObservation]:
-        """Crawl all pages of a category via URL-based pagination."""
+        """Crawl all pages of a category via AJAX "load more" button."""
         all_items: Dict[str, PriceObservation] = {}
+        self._seen_hrefs = set()  # Reset for each category
 
         logger.info("Crawling %s", category.slug)
 
@@ -138,26 +143,64 @@ class SulpakMarket(BaseMarket):
 
         try:
             page.goto(category.url, wait_until="domcontentloaded", timeout=60_000)
-            page.wait_for_timeout(2_000)
+            page.wait_for_timeout(3_000)
 
-            max_pages = self._detect_max_pages(page)
-            logger.debug("Max pages: %d", max_pages)
+            html = page.content()
+            self.dbg.save_html(html, f"stage1_category_{category.slug}.html")
 
             self.dbg.save_screenshot(page, "stage1_page1.png")
 
+            # Parse initial page
             items = self._parse_page(page, category, city, run_id)
             for item in items:
                 all_items[item.product_url] = item
             logger.debug("Page 1: %d items, cumulative %d", len(items), len(all_items))
 
-            for page_num in range(2, max_pages + 1):
-                page_url = f"{category.url}?page={page_num}"
-                logger.debug("Page %d/%d: %s", page_num, max_pages, page_url)
+            # Click "load more" button repeatedly until it disappears
+            page_num = 2
+            while True:
+                # Check if "load more" button still exists
+                button_exists = page.evaluate(
+                    """() => {
+                        return !!document.querySelector(
+                            '.product__item-more .product__item-inner[data-next-page]'
+                        );
+                    }"""
+                )
 
-                page.goto(page_url, wait_until="domcontentloaded", timeout=60_000)
-                page.wait_for_timeout(1_500)
+                if not button_exists:
+                    logger.debug("No more 'load more' button found; pagination complete")
+                    break
 
+                logger.debug("Page %d: calling loadMoreProducts function", page_num)
+
+                try:
+                    # Call the loadMoreProducts function via JavaScript
+                    # This mimics clicking the button without actually clicking it
+                    page.evaluate(
+                        """() => {
+                            const btn = document.querySelector(
+                                '.product__item-more .product__item-inner[data-next-page]'
+                            );
+                            if (btn && typeof loadMoreProducts === 'function') {
+                                loadMoreProducts(btn);
+                            }
+                        }"""
+                    )
+
+                    # Wait for AJAX response and DOM updates
+                    page.wait_for_timeout(3_000)
+                except Exception as e:
+                    logger.debug("Failed to call loadMoreProducts: %s", e)
+                    break
+
+                # Parse newly loaded products
                 items = self._parse_page(page, category, city, run_id)
+
+                if not items:
+                    logger.debug("Page %d returned no new items; stopping", page_num)
+                    break
+
                 for item in items:
                     all_items[item.product_url] = item
 
@@ -166,6 +209,7 @@ class SulpakMarket(BaseMarket):
                     "Page %d: %d items, cumulative %d",
                     page_num, len(items), len(all_items),
                 )
+                page_num += 1
         finally:
             context.close()
 
@@ -177,28 +221,13 @@ class SulpakMarket(BaseMarket):
     # -- Pagination detection -----------------------------------------------
 
     @staticmethod
-    def _detect_max_pages(page: Page) -> int:
+    def _detect_max_pages() -> int:
         """
-        Extract total pages from the 'Страница X из Y' counter.
-        Falls back to scanning ?page=N links if the counter is absent.
+        Sulpak uses dynamic "load more" pagination with no upfront page count.
+        Return a high limit (100) and crawl_category will stop when pages return no items.
         """
-        try:
-            body_text = page.inner_text("body")
-            m = MAX_PAGES_RE.search(body_text)
-            if m:
-                return int(m.group(1))
-        except Exception:
-            pass
-
-        # Fallback: collect max from pagination href attributes
-        html = page.content()
-        soup = BeautifulSoup(html, "html.parser")
-        max_page = 1
-        for a in soup.select('a[href*="page="]'):
-            pm = re.search(r"[?&]page=(\d+)", a.get("href", ""))
-            if pm:
-                max_page = max(max_page, int(pm.group(1)))
-        return max_page
+        logger.debug("Sulpak uses dynamic pagination; will crawl until empty page")
+        return 100  # High limit; loop stops when _parse_page returns no items
 
     # -- Page parsing -------------------------------------------------------
 
@@ -210,16 +239,15 @@ class SulpakMarket(BaseMarket):
         run_id: str,
     ) -> List[PriceObservation]:
         """
-        Parse one listing page.
+        Parse new products from current page.
 
-        Uses window.insider_object.listing.items (embedded server-side JS) for
-        structured product names and prices. Product URLs are collected from
-        a[href^="/g/"] elements in DOM order, which matches the JS object order.
-        The two lists are zipped by position.
+        Since Sulpak dynamically loads products, we return only NEW products
+        (those not seen in previous pages) by tracking all hrefs. This way,
+        each _parse_page call returns ~22 new items from each "load more".
         """
         captured = datetime.now(timezone.utc).isoformat()
 
-        # Pull structured data from the embedded insider_object
+        # Get current batch data (most recent 22 items from insider_object)
         js_items: List[dict] = page.evaluate(
             """() => {
                 try {
@@ -233,14 +261,14 @@ class SulpakMarket(BaseMarket):
             }"""
         )
 
-        # Collect unique product hrefs in DOM order (strip #fragments to deduplicate)
-        product_hrefs: List[str] = page.evaluate(
+        # Get ALL product hrefs in DOM (accumulated from all pages so far)
+        all_product_hrefs: List[str] = page.evaluate(
             """() => {
                 const seen = new Set();
                 const result = [];
                 document.querySelectorAll('a[href^="/g/"]').forEach(el => {
                     const raw = el.getAttribute('href') || '';
-                    const h = raw.split('#')[0];  // strip fragment (#buyCheaperTab etc.)
+                    const h = raw.split('#')[0];
                     if (h && !seen.has(h)) {
                         seen.add(h);
                         result.push(h);
@@ -250,41 +278,45 @@ class SulpakMarket(BaseMarket):
             }"""
         )
 
-        if not js_items or not product_hrefs:
+        if not js_items or not all_product_hrefs:
             logger.debug(
                 "No data on page (insider_items=%d hrefs=%d)",
-                len(js_items), len(product_hrefs),
+                len(js_items), len(all_product_hrefs),
             )
             return []
 
-        n = min(len(js_items), len(product_hrefs))
-        if len(js_items) != len(product_hrefs):
-            logger.warning(
-                "Count mismatch: insider_items=%d hrefs=%d — using first %d",
-                len(js_items), len(product_hrefs), n,
-            )
-
         observations: List[PriceObservation] = []
-        seen_urls: set = set()
 
-        for i in range(n):
-            href = product_hrefs[i]
-            product_url = BASE_URL + href
-            if product_url in seen_urls:
+        # Match the last batch of hrefs with insider_object items
+        # The last 22 hrefs should correspond to the 22 items in insider_object
+        start_idx = max(0, len(all_product_hrefs) - len(js_items))
+        for i in range(start_idx, len(all_product_hrefs)):
+            href = all_product_hrefs[i]
+
+            # Skip if we've seen this href before
+            if href in self._seen_hrefs:
                 continue
-            seen_urls.add(product_url)
+            self._seen_hrefs.add(href)
 
-            name = (js_items[i].get("name") or "").strip()
+            batch_idx = i - start_idx
+            if batch_idx >= len(js_items):
+                continue
+
+            product_url = BASE_URL + href
+            name = (js_items[batch_idx].get("name") or "").strip()
+            price_raw = js_items[batch_idx].get("price")
+
             if not name:
                 continue
 
-            price_raw = js_items[i].get("price")
             if price_raw is None:
                 continue
+
             try:
                 price = int(float(price_raw))
             except (TypeError, ValueError):
                 continue
+
             if price < 10:
                 continue
 
@@ -308,6 +340,7 @@ class SulpakMarket(BaseMarket):
             )
 
         return observations
+
 
 
 # ---------------------------------------------------------------------------

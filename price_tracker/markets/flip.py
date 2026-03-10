@@ -49,7 +49,6 @@ PRICE_RE = re.compile(r"([\d\s\xa0\u202f]+)\s*₸")
 # Static helpers
 # ---------------------------------------------------------------------------
 
-
 def _to_int_price(s: str) -> int:
     """Strip all whitespace variants from price string and return int."""
     return int(re.sub(r"[\s\xa0\u202f]+", "", s))
@@ -86,7 +85,6 @@ def _detect_max_pages(soup: BeautifulSoup) -> int:
 # ---------------------------------------------------------------------------
 # FlipMarket adapter
 # ---------------------------------------------------------------------------
-
 
 class FlipMarket(BaseMarket):
     """

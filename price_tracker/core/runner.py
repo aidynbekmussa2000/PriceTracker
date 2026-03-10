@@ -65,14 +65,25 @@ class Runner:
 
         logger.info("Starting run %s  markets=%s cities=%s", run_id, markets, cities)
 
+        market_errors: list = []
+        market_successes: list = []
+
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=headless)
             try:
                 for market_name in markets:
-                    market_cls = get_market_class(market_name)
-                    market = market_cls(
-                        browser=browser, headless=headless, debug=debug
-                    )
+                    try:
+                        market_cls = get_market_class(market_name)
+                        market = market_cls(
+                            browser=browser, headless=headless, debug=debug
+                        )
+                    except Exception as exc:
+                        logger.error(
+                            "Failed to initialize market %s: %s",
+                            market_name, exc,
+                        )
+                        market_errors.append((market_name, None, str(exc)))
+                        continue
 
                     for city in cities:
                         if city not in market.supported_cities:
@@ -81,12 +92,22 @@ class Runner:
                                 city, market_name,
                             )
                             continue
-                        self._run_market_city(
-                            market, city, run_id, only_category_id
-                        )
+                        try:
+                            self._run_market_city(
+                                market, city, run_id, only_category_id
+                            )
+                            market_successes.append((market_name, city))
+                        except Exception as exc:
+                            logger.error(
+                                "Market %s/%s failed: %s",
+                                market_name, city, exc,
+                            )
+                            market_errors.append((market_name, city, str(exc)))
+                            continue
             finally:
                 browser.close()
 
+        self._log_run_summary(market_successes, market_errors)
         logger.info("Run %s complete", run_id)
 
     def _run_market_city(
@@ -135,6 +156,11 @@ class Runner:
             results, market.market_name, city, run_id, run_start, run_end
         )
         logger.info("Report saved → %s", report_path)
+
+        log_path = self.storage.append_scrape_log(
+            results, market.market_name, city, run_id, run_start, run_end
+        )
+        logger.info("Scrape log updated → %s", log_path)
 
         self._log_summary(results)
         return results
@@ -224,3 +250,25 @@ class Runner:
                 logger.info("  %s (%s): %s", r.category.id, r.category.slug,
                             last[0] if last else "unknown")
         logger.info("─" * 50)
+
+    @staticmethod
+    def _log_run_summary(
+        successes: list,
+        errors: list,
+    ) -> None:
+        """Print a final cross-market summary."""
+        if not successes and not errors:
+            return
+        logger.info("═" * 50)
+        logger.info("RUN SUMMARY")
+        logger.info("═" * 50)
+        if successes:
+            logger.info("Completed: %d market/city combinations", len(successes))
+            for market_name, city in successes:
+                logger.info("  OK  %s/%s", market_name, city)
+        if errors:
+            logger.info("Failed: %d market/city combinations", len(errors))
+            for market_name, city, err in errors:
+                label = f"{market_name}/{city}" if city else market_name
+                logger.info("  FAIL  %s — %s", label, err)
+        logger.info("═" * 50)
