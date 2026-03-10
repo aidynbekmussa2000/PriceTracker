@@ -15,3 +15,18 @@ debug_*/
 # Runtime outputs
 data/
 run_report.json
+
+debug_vprestige/
+data/**/*.json
+data/**/*.jsonl
+data/*.json
+*.png
+*.html
+
+venv/
+.venv/
+__pycache__/
+*.pyc
+data/
+*.log
+.DS_Store
