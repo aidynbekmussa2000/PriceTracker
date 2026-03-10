@@ -2,12 +2,31 @@
 
 ## Current Status
 **Last Updated:** 2026-03-10
-**Market Tasks Completed:** 11
-**Current Task:** — (finnflare complete; biosfera pending)
+**Market Tasks Completed:** 12
+**Current Task:** — (biosfera complete; all tasks done)
 
 ---
 
 ## Session Log
+
+### 2026-03-10 — add_market_biosfera
+- **Task:** `add_market_biosfera` — Add Biosfera marketplace adapter (https://biosfera.kz/ru)
+- **Files changed:**
+  - `price_tracker/markets/biosfera.py` (created)
+  - `price_tracker/markets/__init__.py` (added biosfera import)
+  - `config.yaml` (added biosfera to markets list)
+- **Key finding:** biosfera.kz is a Next.js React app (App Router with RSC streaming) backed by a public REST API at `https://back.biosfera.kz`. No browser/Playwright needed — adapter uses `requests` to call the JSON API directly. Category discovery parses `sitemap-categories.xml`, extracts all `/ru/catalog/` paths, identifies leaf paths (those not a URL-prefix of any other), and extracts the leaf slug (last path component) as the category key. Product API: `GET back.biosfera.kz/products/bycategory?category={leaf_slug}&page={n}&limit=50` — page starts at 1, maximum 50 items per request regardless of limit value. Total pages computed via `ceil(totalCount / 50)`. City-specific pricing via `minPricesByCity` dict (e.g. `minPricesByCity['Алматы']`); fallback to base `price` field. Product URL pattern: `https://biosfera.kz/ru/product/{GUID}`. City is mapped: 'almaty' → 'Алматы'. Authorization header not required (site sends `Bearer null` from localStorage; API works without it).
+- **Commands run:**
+  - `python -m price_tracker.main --market biosfera --city almaty --headless --list-categories` (124 categories)
+  - `python -m price_tracker.main --market biosfera --city almaty --headless --category-id travy` (multi-page validation)
+  - `python -m price_tracker.main --market biosfera --city almaty --headless --category-id stomatologicheskie-sredstva` (single category validation)
+- **Validation results:**
+  - 124 leaf categories discovered
+  - 351 unique products in travy — 8 pages, correct pagination
+  - 53 unique products in stomatologicheskie-sredstva — 2 pages, correct pagination
+  - Output: `data/biosfera/almaty/20260310_113700Z.jsonl` (351 lines), `data/biosfera/almaty/20260310_113713Z.jsonl` (53 lines)
+  - Sample product: "Репешок обыкновенный 50 г трава" at 1,170 KZT
+- **Status:** passes=true
 
 ### 2026-03-10 — add_market_finnflare
 - **Task:** `add_market_finnflare` — Add FinnFlare marketplace adapter (https://www.finn-flare.kz)
