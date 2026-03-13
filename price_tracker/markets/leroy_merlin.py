@@ -22,6 +22,7 @@ from playwright.sync_api import BrowserContext
 
 from ..core.models import CategoryInfo, PriceObservation
 from .base import BaseMarket
+from ._construction_filter import is_relevant_category
 
 logger = logging.getLogger("price_tracker.leroy_merlin")
 
@@ -113,7 +114,7 @@ class LeroyMerlinMarket(BaseMarket):
     # -- Category discovery -------------------------------------------------
 
     def discover_categories(self, city: str) -> List[CategoryInfo]:
-        """Load the catalogue index and extract all /catalogue/{slug}/ links."""
+        """Load the catalogue index, filter to inflation-relevant categories only."""
         logger.info("Discovering categories from %s", CATALOGUE_URL)
 
         context = self._new_context()
@@ -126,39 +127,71 @@ class LeroyMerlinMarket(BaseMarket):
             self.dbg.save_screenshot(page, "discovery_catalog.png")
             self.dbg.save_html(page.content(), "discovery_catalog.html")
 
-            hrefs: List[str] = page.eval_on_selector_all(
+            # Extract href + visible Russian text for each catalogue link.
+            # Deduplication by href is done in JS.
+            entries: List[dict] = page.eval_on_selector_all(
                 'a[href*="/catalogue/"]',
-                """els => [...new Set(
-                    els.map(e => e.getAttribute('href'))
-                       .filter(h => h && h !== '/catalogue/' && !h.startsWith('http'))
-                )]""",
+                """(els) => {
+                    const seen = new Set();
+                    const results = [];
+                    for (const el of els) {
+                        const href = el.getAttribute('href');
+                        if (!href || href === '/catalogue/' || href.startsWith('http')) continue;
+                        if (seen.has(href)) continue;
+                        seen.add(href);
+                        results.push({href, text: (el.innerText || el.textContent || '').trim()});
+                    }
+                    return results;
+                }""",
             )
         finally:
             context.close()
 
         categories: List[CategoryInfo] = []
-        seen: set = set()
+        seen_slugs: set = set()
+        total_discovered = matched = skipped = 0
 
-        for href in hrefs:
+        for entry in entries:
+            href = entry.get("href", "")
+            display_text = entry.get("text", "")
+
             # Only depth-1 catalogue paths: /catalogue/{slug}/
             parts = href.strip("/").split("/")
             if len(parts) != 2 or parts[0] != "catalogue":
                 continue
 
             slug = parts[1]
-            if not slug or slug in seen:
+            if not slug or slug in seen_slugs:
                 continue
-            seen.add(slug)
+            seen_slugs.add(slug)
 
             url = BASE + href.rstrip("/") + "/"
-            categories.append(CategoryInfo(id=slug, slug=slug, url=url))
+            label = display_text or slug.replace("-", " ")
+            total_discovered += 1
+            logger.info("[DISCOVERED] %s (slug=%s)", label, slug)
+
+            relevant, cpi_group = is_relevant_category(label, url)
+            if not relevant:
+                logger.info("[SKIPPED] %s", label)
+                skipped += 1
+                continue
+
+            logger.info("[MATCHED] %s -> %s", label, cpi_group)
+            matched += 1
+            categories.append(CategoryInfo(id=slug, slug=slug, url=url, name=label))
 
         categories.sort(key=lambda c: c.slug)
 
-        if not categories:
-            raise RuntimeError("No categories discovered — check network or site structure")
+        logger.info(
+            "Category filter complete: discovered=%d  matched=%d  skipped=%d",
+            total_discovered, matched, skipped,
+        )
 
-        logger.info("Discovered %d categories", len(categories))
+        if not categories:
+            raise RuntimeError(
+                "No relevant categories found — check network or update filter keywords"
+            )
+
         return categories
 
     # -- Single-category crawl ----------------------------------------------
@@ -173,7 +206,7 @@ class LeroyMerlinMarket(BaseMarket):
         all_items: dict = {}  # keyed by product_url for dedup
         base_url = category.url.rstrip("/") + "/"
 
-        logger.info("Crawling %s (category %s)", category.slug, category.id)
+        logger.info("[SCRAPING] %s", category.name or category.slug)
 
         context = self._new_context()
         page = context.new_page()

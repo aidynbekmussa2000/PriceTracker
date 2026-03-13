@@ -2,11 +2,28 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List
 
 from .models import CategoryResult, PriceObservation
+
+ASTANA_TZ = timezone(timedelta(hours=5))
+
+
+def _format_astana(dt: datetime) -> str:
+    """Format datetime in Astana time (UTC+5) in a user-friendly format."""
+    astana = dt.astimezone(ASTANA_TZ)
+    day = astana.day
+    return astana.strftime(f"{day} %B %Y, %H:%M (Astana, UTC+5)")
+
+
+def _format_duration(seconds: float) -> str:
+    """Format duration in 'H hr MM min' format."""
+    total_minutes = int(seconds) // 60
+    hours = total_minutes // 60
+    minutes = total_minutes % 60
+    return f"{hours} hr {minutes:02d} min"
 
 
 class Storage:
@@ -55,13 +72,17 @@ class Storage:
             if r.status == "success":
                 total_items += r.item_count
 
+        duration_s = round((run_end - run_start).total_seconds(), 1)
         report = {
             "run_id": run_id,
             "market": market,
             "city": city,
             "run_started_at": run_start.isoformat(),
             "run_finished_at": run_end.isoformat(),
-            "run_duration_s": round((run_end - run_start).total_seconds(), 1),
+            "run_started_at_astana": _format_astana(run_start),
+            "run_finished_at_astana": _format_astana(run_end),
+            "run_duration_s": duration_s,
+            "run_duration": _format_duration(duration_s),
             "total_categories": len(results),
             "summary": summary,
             "total_items_collected": total_items,
@@ -101,12 +122,17 @@ class Storage:
                     "error": last_line[0] if last_line else "unknown",
                 })
 
+        duration_s = round((run_end - run_start).total_seconds(), 1)
         entry = {
             "run_id": run_id,
             "market": market,
             "city": city,
-            "timestamp": run_end.isoformat(),
-            "duration_s": round((run_end - run_start).total_seconds(), 1),
+            "started_at": run_start.isoformat(),
+            "finished_at": run_end.isoformat(),
+            "started_at_astana": _format_astana(run_start),
+            "finished_at_astana": _format_astana(run_end),
+            "duration_s": duration_s,
+            "duration": _format_duration(duration_s),
             "total_categories": len(results),
             "success": summary["success"],
             "empty": summary["empty"],

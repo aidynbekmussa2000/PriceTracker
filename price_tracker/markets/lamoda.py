@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import logging
 import re
+import unicodedata
 from datetime import datetime, timezone
 from typing import List, Optional
 from urllib.parse import urljoin
@@ -85,6 +86,43 @@ def _parse_price(text: str) -> Optional[int]:
 
 PAGINATION_RE = re.compile(r'"pagination"\s*:\s*\{[^}]*"pages"\s*:\s*(\d+)')
 
+# ---------------------------------------------------------------------------
+# Inflation-basket category whitelist
+# ---------------------------------------------------------------------------
+# Keys are internal CPI labels; values are Russian keyword substrings matched
+# against the category's visible navigation label (case-insensitive, NFKC-normalised).
+# Add / remove keywords here to tune coverage without touching scraping logic.
+
+INFLATION_CATEGORY_MAPPING: dict = {
+    "outerwear_men":   ["пуховик", "куртка", "ветровка", "пальто", "муж"],
+    "classic_men":     ["костюм", "брюки классические", "сорочка", "муж"],
+    "casual_men":      ["джинсы", "свитер", "джемпер", "толстовка", "футболка", "майка", "муж"],
+    "underwear_men":   ["трусы", "носки", "муж"],
+    "outerwear_women": ["пуховик", "куртка", "ветровка", "пальто", "жен"],
+    "classic_women":   ["костюм", "блузка", "юбка", "платье", "жен"],
+    "casual_women":    ["свитер", "джемпер", "футболка", "джинсы", "брюки", "жен"],
+    "underwear_women": ["нижнее белье", "колготки", "жен"],
+    "boys":       ["мальчик", "для мальчиков", "футболка", "спортивный костюм", "толстовка", "носки", "трусы"],
+    "girls":      ["девочка", "для девочек", "платье", "футболка", "колготки", "толстовка", "носки", "трусы"],
+    "babies":     ["младен", "до 2 лет", "комбинезон", "базовая одежда"],
+    "school":     ["школьн", "форма", "кардиган", "жилет", "брюки школьные", "юбка школьная", "блузка школьная"],
+    "accessories": ["шапка", "кепка", "берет", "шарф", "палантины", "галстук", "ремень", "перчатки", "варежки"],
+}
+
+
+def normalize_category_name(name: str) -> str:
+    """Lowercase + Unicode-normalize a category label for keyword matching."""
+    return unicodedata.normalize("NFKC", name).lower().strip()
+
+
+def is_relevant_category(name: str) -> bool:
+    """Return True if *name* contains at least one inflation-basket keyword."""
+    normalized = normalize_category_name(name)
+    for keywords in INFLATION_CATEGORY_MAPPING.values():
+        if any(kw in normalized for kw in keywords):
+            return True
+    return False
+
 
 def _max_page_from_html(html: str) -> int:
     """Extract total page count from embedded JSON pagination data.
@@ -141,21 +179,34 @@ class LamodaMarket(BaseMarket):
             self.dbg.save_screenshot(page, "discovery_catalog.png")
             self.dbg.save_html(page.content(), "discovery_catalog.html")
 
-            # Extract all hrefs that match /c/{digits}/{slug}/ without query params
-            hrefs: List[str] = page.eval_on_selector_all(
+            # Extract href + visible text for all /c/{digits}/{slug}/ nav links.
+            # Deduplication is done in JS to avoid returning the same href twice.
+            hrefs: List[dict] = page.eval_on_selector_all(
                 'a[href*="/c/"]',
-                r"""els => [...new Set(
-                    els.map(e => e.getAttribute('href'))
-                       .filter(h => h && /\/c\/\d+\/[^/?#]+/.test(h) && !h.includes('?'))
-                )]""",
+                """(els) => {
+                    const seen = new Set();
+                    const results = [];
+                    for (const el of els) {
+                        const href = el.getAttribute('href');
+                        if (!href || !/\\/c\\/\\d+\\/[^/?#]+/.test(href) || href.includes('?')) continue;
+                        if (seen.has(href)) continue;
+                        seen.add(href);
+                        results.push({href, text: (el.innerText || el.textContent || '').trim()});
+                    }
+                    return results;
+                }""",
             )
         finally:
             context.close()
 
         categories: List[CategoryInfo] = []
         seen_ids: set = set()
+        matched = skipped = 0
 
-        for href in hrefs:
+        for entry in hrefs:
+            href = entry.get("href", "")
+            display_text = entry.get("text", "")
+
             # Normalize: strip domain if present
             path = href
             if path.startswith("http"):
@@ -169,19 +220,33 @@ class LamodaMarket(BaseMarket):
             slug = m.group(2).rstrip("/")
             if not slug or cat_id in seen_ids:
                 continue
-            seen_ids.add(cat_id)
 
+            # Use display text for keyword matching; fall back to slug
+            label_for_match = display_text or slug.replace("-", " ")
+
+            if not is_relevant_category(label_for_match):
+                logger.debug("SKIP category '%s' (slug=%s)", label_for_match, slug)
+                skipped += 1
+                continue
+
+            logger.info("KEEP category '%s' (slug=%s)", label_for_match, slug)
+            matched += 1
+            seen_ids.add(cat_id)
             url = BASE + "/c/" + cat_id + "/" + slug + "/"
-            categories.append(CategoryInfo(id=cat_id, slug=slug, url=url))
+            categories.append(CategoryInfo(id=cat_id, slug=slug, url=url, name=display_text or slug))
 
         categories.sort(key=lambda c: c.slug)
+
+        logger.info(
+            "Category filter complete: %d kept, %d skipped (total discovered: %d)",
+            matched, skipped, matched + skipped,
+        )
 
         if not categories:
             raise RuntimeError(
                 "No categories discovered — check navigation or site structure"
             )
 
-        logger.info("Discovered %d categories", len(categories))
         return categories
 
     # -- Single-category crawl ----------------------------------------------

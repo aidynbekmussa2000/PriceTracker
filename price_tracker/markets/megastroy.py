@@ -28,6 +28,7 @@ from bs4 import BeautifulSoup
 
 from ..core.models import CategoryInfo, PriceObservation
 from .base import BaseMarket
+from ._construction_filter import is_relevant_category
 
 logger = logging.getLogger("price_tracker.megastroy")
 
@@ -110,7 +111,7 @@ class MegastroyMarket(BaseMarket):
     # -- Category discovery -------------------------------------------------
 
     def discover_categories(self, city: str) -> List[CategoryInfo]:
-        """Fetch the catalog page and return all leaf category URLs."""
+        """Fetch the catalog page, keep only inflation-relevant leaf categories."""
         logger.info("Discovering categories from %s", CATALOG_URL)
 
         sess = _make_session()
@@ -119,8 +120,9 @@ class MegastroyMarket(BaseMarket):
 
         soup = BeautifulSoup(resp.text, "html.parser")
 
-        # Collect all unique /catalog/... hrefs
+        # Collect all unique /catalog/... hrefs with their display text
         all_paths: list[str] = []
+        path_names: dict[str, str] = {}
         seen: set = set()
         for a in soup.find_all("a", href=re.compile(r"^/catalog/")):
             href = a.get("href", "").rstrip("/") + "/"
@@ -130,11 +132,14 @@ class MegastroyMarket(BaseMarket):
             if href not in seen:
                 seen.add(href)
                 all_paths.append(href)
+                path_names[href] = a.get_text(strip=True)
 
         # Keep only leaf paths (not a URL-prefix of any other path)
         path_set = set(all_paths)
         leaves: List[CategoryInfo] = []
         seen_slugs: set = set()
+        total_discovered = matched = skipped = 0
+
         for path in all_paths:
             is_leaf = not any(
                 other != path and other.startswith(path)
@@ -145,23 +150,43 @@ class MegastroyMarket(BaseMarket):
             slug = _cat_slug(path)
             if not slug or slug in seen_slugs:
                 continue
+
+            url = urljoin(BASE_URL, path)
+            display_name = path_names.get(path, "")
+            label = display_name or slug.replace("/", " ").replace("-", " ")
+            total_discovered += 1
+            logger.info("[DISCOVERED] %s (path=%s)", label, path)
+
+            relevant, cpi_group = is_relevant_category(label, url)
+            if not relevant:
+                logger.info("[SKIPPED] %s", label)
+                skipped += 1
+                continue
+
+            logger.info("[MATCHED] %s -> %s", label, cpi_group)
+            matched += 1
             seen_slugs.add(slug)
             leaves.append(
                 CategoryInfo(
                     id=slug,
                     slug=slug,
-                    url=urljoin(BASE_URL, path),
+                    url=url,
+                    name=label,
                 )
             )
 
         leaves.sort(key=lambda c: c.id)
 
+        logger.info(
+            "Category filter complete: discovered=%d  matched=%d  skipped=%d",
+            total_discovered, matched, skipped,
+        )
+
         if not leaves:
             raise RuntimeError(
-                "No categories discovered — check network or site structure"
+                "No relevant categories found — check network or update filter keywords"
             )
 
-        logger.info("Discovered %d leaf categories", len(leaves))
         return leaves
 
     # -- Single-category crawl ----------------------------------------------
@@ -174,7 +199,7 @@ class MegastroyMarket(BaseMarket):
     ) -> List[PriceObservation]:
         """Crawl all pages of a single category via URL-based pagination."""
         all_items: Dict[str, PriceObservation] = {}
-        logger.info("Crawling category %s", category.id)
+        logger.info("[SCRAPING] %s", category.name or category.id)
 
         sess = _make_session()
 
